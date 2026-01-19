@@ -413,13 +413,13 @@ Use a aba **Issues** do GitHub para reportar bugs. Inclua:
 
 ## 📜 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Ainda não tem licença. Mas se tu for vender isso, tu é muito corno.
 
 ---
 
 ## 👨‍💻 Autor
 
-Desenvolvido com ❤️ para a comunidade de Ragnarok Online.
+Desenvolvido com ❤️ por Lumen para a comunidade de Ragnarok Online.
 
 ---
 
