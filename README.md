@@ -1,4 +1,4 @@
-# 🎨 RO Pallet Editor
+# 🎨 RO Palette Generator
 
 **Editor de Paletas para Ragnarok Online** - Uma ferramenta visual para criar variações de cores em sprites do jogo Ragnarok Online.
 
@@ -32,7 +32,7 @@
 
 ## 🎯 Sobre o Projeto
 
-O **RO Pallet Editor** é uma ferramenta desenvolvida para facilitar a criação de variações de paletas de cores para sprites do Ragnarok Online. Com esta ferramenta, você pode:
+O **RO Palette Generator** é uma ferramenta desenvolvida para facilitar a criação de variações de paletas de cores para sprites do Ragnarok Online. Com esta ferramenta, você pode:
 
 - Visualizar sprites (.spr) com suas paletas originais
 - Selecionar grupos de cores específicos (roupas, cabelo, acessórios, etc.)
@@ -159,7 +159,7 @@ pip install customtkinter pillow
 python main.py
 ```
 
-O programa abrirá uma janela com a interface do RO Pallet Editor.
+O programa abrirá uma janela com a interface do RO Palette Generator.
 
 ---
 
