@@ -18,6 +18,10 @@ class SpritePreview(ctk.CTkFrame):
         self.current_image = None
         self.ctk_image = None
         
+        # Store initial data for re-rendering
+        self.last_pil_image = None
+        self.last_palette = None
+        
         self.scale = 2.0 # Default zoom
         
         # Callback for pixel click: receives palette index
@@ -31,12 +35,17 @@ class SpritePreview(ctk.CTkFrame):
         pil_image: PIL Image (P mode or RGBA)
         palette: List of (r,g,b). If None, uses image's current palette.
         """
+        # Store for re-scaling
+        self.last_pil_image = pil_image
+        self.last_palette = palette
+        
         # Clear previous image references
         self.ctk_image = None
         self.current_image = None
         self.original_image = None
         self.original_indexed = None
-        self.image_label.configure(image=None, text="")
+        # Don't set image=None as it causes TclError, just clear text
+        self.image_label.configure(text="")
         
         if pil_image is None:
             return
@@ -50,6 +59,13 @@ class SpritePreview(ctk.CTkFrame):
         
         # Apply NEW palette if provided
         if palette:
+            # Get background color from index 0
+            bg_color = palette[0][:3] if palette else (255, 255, 255)
+            bg_hex = f"#{bg_color[0]:02x}{bg_color[1]:02x}{bg_color[2]:02x}"
+            self.configure(fg_color=bg_hex)
+            self.container.configure(fg_color=bg_hex)
+            self.image_label.configure(fg_color=bg_hex)
+            
             # Flatten palette for PIL: [r,g,b, r,g,b...]
             flat_pal = []
             for color in palette:
@@ -85,9 +101,8 @@ class SpritePreview(ctk.CTkFrame):
     def set_scale(self, scale):
         self.scale = scale
         # Redraw if image exists
-        if self.original_image:
-            # Re-render with new scale
-            self.set_sprite(self.original_image.convert('P'))
+        if self.last_pil_image:
+            self.set_sprite(self.last_pil_image, self.last_palette)
 
     def _on_click(self, event):
         """Handle click on sprite preview to select palette index"""

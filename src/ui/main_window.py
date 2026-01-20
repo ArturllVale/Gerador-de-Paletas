@@ -18,8 +18,8 @@ class MainWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("RO Palette Automator")
-        self.geometry("1100x700")
+        self.title("RO Palette Generator")
+        self.geometry("1100x900")
         
         # Logic State
         self.project_state = ProjectState()
@@ -39,6 +39,7 @@ class MainWindow(ctk.CTk):
         
         # Frame index for preview
         self.current_frame_index = 0
+        self.is_playing = False
         
         # --- Top Menu ---
         self.top_frame = ctk.CTkFrame(self, height=40)
@@ -55,6 +56,27 @@ class MainWindow(ctk.CTk):
             hover_color="#C0583D"
         )
         self.btn_preview_mode.pack(side="left", padx=5, pady=5)
+        
+        # --- Generate Palettes Button (General) ---
+        self.frame_gen_controls = ctk.CTkFrame(self.top_frame, fg_color="transparent")
+        self.frame_gen_controls.pack(side="right", padx=10, pady=5)
+        
+        self.lbl_count = ctk.CTkLabel(self.frame_gen_controls, text="Quantidade:")
+        self.lbl_count.pack(side="left", padx=5)
+        
+        self.entry_count = ctk.CTkEntry(self.frame_gen_controls, width=50)
+        self.entry_count.insert(0, "10")
+        self.entry_count.pack(side="left", padx=5)
+        
+        self.btn_generate = ctk.CTkButton(
+            self.frame_gen_controls, 
+            text="🎲 Gerar Paletas", 
+            command=self.generate_all_groups,
+            fg_color="#4CAF50",
+            hover_color="#388E3C",
+            width=140
+        )
+        self.btn_generate.pack(side="left", padx=5)
         
         self.lbl_info = ctk.CTkLabel(self.top_frame, text="Nenhum arquivo carregado")
         self.lbl_info.pack(side="left", padx=10)
@@ -73,6 +95,7 @@ class MainWindow(ctk.CTk):
         self.group_mgr.btn_add.pack_forget() # Hide the add button
         self.group_mgr.grid(row=0, column=0, sticky="ew", pady=(0, 10))
         self.group_mgr.on_group_select = self.select_group
+        self.group_mgr.on_deselect = self.deselect_group
         
         # Visualizer
         self.lbl_vis = ctk.CTkLabel(self.left_col, text="Visualizador de Paleta (Selecione cores → Criar Grupo)", font=("Roboto", 12, "bold"))
@@ -114,7 +137,6 @@ class MainWindow(ctk.CTk):
         # Settings
         self.settings_panel = GroupSettingsFrame(self.right_col)
         self.settings_panel.grid(row=0, column=0, sticky="ew", pady=(0, 10))
-        self.settings_panel.btn_gen_group.configure(command=self.generate_for_group)
         self.settings_panel.on_change_callback = self._update_preview
         
         # Preview
@@ -137,6 +159,9 @@ class MainWindow(ctk.CTk):
         
         self.btn_next_frame = ctk.CTkButton(self.frame_nav, text="▶", width=40, command=self._next_frame)
         self.btn_next_frame.pack(side="left", padx=5)
+        
+        self.btn_play = ctk.CTkButton(self.frame_nav, text="▶ Play", width=60, command=self._toggle_play, fg_color="#2CC985", hover_color="#229965")
+        self.btn_play.pack(side="left", padx=10)
 
     def load_spr(self):
         path = filedialog.askopenfilename(filetypes=[("RO Sprite", "*.spr")])
@@ -205,6 +230,14 @@ class MainWindow(ctk.CTk):
             self.visualizer._redraw_colors()
         else:
             self.visualizer.clear_selection()
+    
+    def deselect_group(self):
+        """Deselect current group and clear visualizer selection"""
+        self.current_active_group = None
+        self.group_mgr.update_groups(self.project_state.groups, selected_group=None)
+        self.settings_panel.load_group(None)
+        self.visualizer.clear_selection()
+        self._update_preview()
             
     def _sync_selection_to_group(self):
         if self.current_active_group:
@@ -261,45 +294,71 @@ class MainWindow(ctk.CTk):
         # Let's apply the current settings as if they were fully applied.
         
         for group in self.project_state.groups:
-            # Shift = End (Target) ?? Or Start? 
-            # Preview usually shows the result of "Generate". 
-            # If generating batch, which one?
-            # Let's assume the preview shows the "Start" settings or "End"?
-            # Actually user sets "Hue Shift Start" and "Hue Shift End" for the BATCH.
-            # To see effect, maybe we use "Start" value?
+            # Check if group has fixed gradient
+            is_fixed = getattr(group, 'is_fixed', False)
             
-            shift = group.hue_shift_start # Preview start?
-            
-            for i in group.indices:
-                if 0 <= i < 256:
-                    from src.core.color_math import apply_adjustments, apply_colorize
-                    orig = temp_pal[i][:3]
+            if is_fixed:
+                # Apply fixed gradient directly to indices
+                fixed_gradient = getattr(group, 'fixed_gradient', None)
+                if fixed_gradient and len(fixed_gradient) == 8:
+                    sorted_indices = sorted(group.indices)
+                    num_colors = len(sorted_indices)
                     
-                    if getattr(group, 'mode', 'hsv') == 'colorize':
-                        new_col = apply_colorize(
-                             orig,
-                             target_hue=shift,
-                             target_sat=group.sat_shift, # 0-1
-                             value_mult=1.0 + group.val_shift
-                        )
-                    else:
-                        new_col = apply_adjustments(
-                            orig, 
-                            hue_shift=shift, 
-                            saturation_mult=1+group.sat_shift, 
-                            value_mult=1+group.val_shift
-                        )
+                    for j, idx in enumerate(sorted_indices):
+                        if 0 <= idx < 256:
+                            # Map index position to gradient position
+                            gradient_pos = int((j / max(num_colors - 1, 1)) * 7)
+                            gradient_pos = min(gradient_pos, 7)
+                            base_col = fixed_gradient[gradient_pos]
+                            
+                            # Apply saturation and brightness adjustments
+                            import colorsys
+                            r, g, b = base_col[0]/255, base_col[1]/255, base_col[2]/255
+                            h, s, v = colorsys.rgb_to_hsv(r, g, b)
+                            
+                            # Apply shifts
+                            s = max(0, min(1, s + group.sat_shift))
+                            v = max(0, min(1, v * (1 + group.val_shift)))
+                            
+                            r, g, b = colorsys.hsv_to_rgb(h, s, v)
+                            new_col = (int(r*255), int(g*255), int(b*255))
+                            temp_pal[idx] = (*new_col, 255)
+            else:
+                # Original logic for non-fixed groups
+                shift = group.hue_shift_start
+                
+                for i in group.indices:
+                    if 0 <= i < 256:
+                        from src.core.color_math import apply_adjustments, apply_colorize
+                        orig = temp_pal[i][:3]
                         
-                    temp_pal[i] = (*new_col, 255) # Set alpha 255
+                        if getattr(group, 'mode', 'hsv') == 'colorize':
+                            new_col = apply_colorize(
+                                 orig,
+                                 target_hue=shift,
+                                 target_sat=group.sat_shift,
+                                 value_mult=1.0 + group.val_shift
+                            )
+                        else:
+                            new_col = apply_adjustments(
+                                orig, 
+                                hue_shift=shift, 
+                                saturation_mult=1+group.sat_shift, 
+                                value_mult=1+group.val_shift
+                            )
+                            
+                        temp_pal[i] = (*new_col, 255)
         
         self.preview.set_sprite(base_img, palette=temp_pal)
         
-    def generate_for_group(self):
-        if not self.current_active_group:
-             return
-             
+    def generate_all_groups(self):
+        """Generate palettes considering all groups."""
+        if not self.project_state.groups:
+            messagebox.showwarning("Aviso", "Crie pelo menos um grupo de cores primeiro!")
+            return
+              
         try:
-            count = int(self.settings_panel.entry_count.get())
+            count = int(self.entry_count.get())
         except ValueError:
             messagebox.showerror("Erro", "Quantidade inválida")
             return
@@ -308,29 +367,15 @@ class MainWindow(ctk.CTk):
         if not output: return
         
         try:
-            # We want to generate variations ONLY for this group.
-            # But the generator expects a list of groups.
-            # We pass just this group to the generator?
-            # Or do we want to apply other groups as static?
-            # User said "Generate ... based on hue I set" (singular).
-            # IMPLIED: I want to generate variations of THIS group.
-            # Other groups should probably remain at their "Base" color, or current settings?
-            # Let's assume ONLY the current group varies, others are static (or ignored if not applied).
-            
-            # Actually, the Generator logic iterates "groups".
-            # If we pass only [current_group], then only that group is modified.
-            # This seems correct for "Generate variations of Bag". 
-            # The result is 10 palettes where Bag varies.
-            
             gen = PaletteGenerator([x[:3] for x in self.project_state.palette])
             gen.generate_batch(
                 output_dir=output,
-                base_filename=f"{self.current_filename}_{self.current_active_group.name}",
+                base_filename=self.current_filename,
                 count=count,
-                groups=[self.current_active_group],
+                groups=self.project_state.groups,
                 generate_preview=True
             )
-            messagebox.showinfo("Sucesso", f"Geradas {count} variações para {self.current_active_group.name}!")
+            messagebox.showinfo("Sucesso", f"Geradas {count} variações!")
             os.startfile(output)
         except Exception as e:
             messagebox.showerror("Erro", str(e))
@@ -348,6 +393,20 @@ class MainWindow(ctk.CTk):
         total_frames = len(self.project_state.spr_parser.images)
         self.current_frame_index = (self.current_frame_index + 1) % total_frames
         self._update_preview()
+
+    def _toggle_play(self):
+        self.is_playing = not self.is_playing
+        if self.is_playing:
+            self.btn_play.configure(text="⏸ Pause", fg_color="#FF5555", hover_color="#CC0000")
+            self._animate_loop()
+        else:
+            self.btn_play.configure(text="▶ Play", fg_color="#2CC985", hover_color="#229965")
+    
+    def _animate_loop(self):
+        if self.is_playing:
+            self._next_frame()
+            # 150ms delay for animation
+            self.after(150, self._animate_loop)
 
     def enter_preview_mode(self):
         """Open preview mode window"""

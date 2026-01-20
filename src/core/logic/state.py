@@ -14,6 +14,20 @@ class ColorGroup:
         self.hue_range_start = 0    # 0° = Red
         self.hue_range_end = 360    # 360° = Full spectrum
         
+        # Fixed color settings
+        self.is_fixed = False       # If True, use fixed_gradient instead of generating
+        # Gradient of 8 colors (RGB tuples) - represents the fixed color ramp
+        self.fixed_gradient = [
+            (255, 255, 255),  # Lightest
+            (224, 224, 224),
+            (192, 192, 192),
+            (160, 160, 160),
+            (128, 128, 128),
+            (96, 96, 96),
+            (64, 64, 64),
+            (32, 32, 32),     # Darkest
+        ]
+        
         # Count for this group (if varying individually, but usually global count is used)
         
     def add_index(self, idx):

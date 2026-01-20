@@ -16,50 +16,85 @@ class PaletteGenerator:
         Generates 'count' unique variations based on groups settings.
         Distributes hue evenly across 360° for guaranteed uniqueness.
         """
+        import random
         
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         generated_files = []
         
+        # Generate random phase shifts for each group to ensure independence
+        group_phase_shifts = [random.random() for _ in range(len(groups))]
+        
         for i in range(count):
             new_palette = list(self.base_palette) # Copy original
             
-            for group in groups:
-                # Get hue range from group settings (in degrees)
-                hue_start = getattr(group, 'hue_range_start', 0)
-                hue_end = getattr(group, 'hue_range_end', 360)
+            for g_idx, group in enumerate(groups):
+                # Check if this group has a fixed color
+                is_fixed = getattr(group, 'is_fixed', False)
                 
-                # Calculate hue range
-                hue_range = hue_end - hue_start
-                
-                # If colors are the same (or very close), use full 360° spectrum
-                if abs(hue_range) < 10:  # Less than 10 degrees difference = same color
-                    hue_range = 360
-                    hue_start = 0
-                elif hue_range < 0:
-                    # Wrap around (e.g., from 350° to 30° = 40° range through red)
-                    hue_range = hue_range + 360
-                
-                # Distribute evenly within the specified range
-                hue_degrees = hue_start + (hue_range * i) / count
-                hue_degrees = hue_degrees % 360  # Normalize to 0-360
-                hue_normalized = hue_degrees / 360.0  # 0.0 to 1.0
-                
-                for idx in group.indices:
-                    if 0 <= idx < 256:
-                        color = new_palette[idx]
+                if is_fixed:
+                    # Use the fixed gradient (8 colors) - apply directly to indices
+                    fixed_gradient = getattr(group, 'fixed_gradient', None)
+                    if fixed_gradient and len(fixed_gradient) == 8:
+                        import colorsys
+                        # Map the gradient to the group indices
+                        sorted_indices = sorted(group.indices)
+                        num_colors = len(sorted_indices)
                         
-                        # For batch generation, we REPLACE the hue (not shift)
-                        # This ensures colors are in the specified range
-                        new_color = apply_colorize(
-                            color,
-                            target_hue=hue_normalized,
-                            target_sat=None,  # Keep original saturation
-                            value_mult=1.0 + group.val_shift
-                        )
-                        
-                        new_palette[idx] = new_color
+                        for j, idx in enumerate(sorted_indices):
+                            if 0 <= idx < 256:
+                                # Map index position to gradient position
+                                gradient_pos = int((j / max(num_colors - 1, 1)) * 7)
+                                gradient_pos = min(gradient_pos, 7)  # Clamp to 0-7
+                                base_col = fixed_gradient[gradient_pos]
+                                
+                                # Apply saturation and brightness adjustments
+                                r, g, b = base_col[0]/255, base_col[1]/255, base_col[2]/255
+                                h, s, v = colorsys.rgb_to_hsv(r, g, b)
+                                
+                                # Apply shifts
+                                s = max(0, min(1, s + group.sat_shift))
+                                v = max(0, min(1, v * (1 + group.val_shift)))
+                                
+                                r, g, b = colorsys.hsv_to_rgb(h, s, v)
+                                new_palette[idx] = (int(r*255), int(g*255), int(b*255))
+                else:
+                    # Get hue range from group settings (in degrees)
+                    hue_start = getattr(group, 'hue_range_start', 0)
+                    hue_end = getattr(group, 'hue_range_end', 360)
+                    
+                    # Calculate hue range
+                    hue_range = hue_end - hue_start
+                    
+                    # If colors are the same (or very close), use full 360° spectrum
+                    if abs(hue_range) < 10:  # Less than 10 degrees difference = same color
+                        hue_range = 360
+                        hue_start = 0
+                    elif hue_range < 0:
+                        # Wrap around (e.g., from 350° to 30° = 40° range through red)
+                        hue_range = hue_range + 360
+                    
+                    # Distribute evenly within the specified range, but with random phase shift per group
+                    step_fraction = (i / max(count, 1) + group_phase_shifts[g_idx]) % 1.0
+                    hue_degrees = hue_start + (hue_range * step_fraction)
+
+                    hue_degrees = hue_degrees % 360  # Normalize to 0-360
+                    hue_normalized = hue_degrees / 360.0  # 0.0 to 1.0
+                    
+                    for idx in group.indices:
+                        if 0 <= idx < 256:
+                            color = new_palette[idx]
+                            
+                            # Apply colorize with the target hue
+                            new_color = apply_colorize(
+                                color,
+                                target_hue=hue_normalized,
+                                target_sat=None,  # Keep original saturation
+                                value_mult=1.0 + group.val_shift
+                            )
+                            
+                            new_palette[idx] = new_color
             
             # Form filename: Name_0.pal, Name_1.pal, etc.
             filename = f"{base_filename}_{i}.pal"

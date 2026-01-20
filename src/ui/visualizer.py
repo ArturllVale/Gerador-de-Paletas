@@ -62,6 +62,12 @@ class PaletteVisualizer(ctk.CTkFrame):
             return
             
         self.palette = palette_data
+        
+        # Update canvas background to index 0 color
+        bg_color = palette_data[0] if palette_data else (43, 43, 43)
+        bg_hex = f"#{bg_color[0]:02x}{bg_color[1]:02x}{bg_color[2]:02x}"
+        self.canvas.configure(bg=bg_hex)
+        
         self._redraw_colors()
         
     def _redraw_colors(self):
