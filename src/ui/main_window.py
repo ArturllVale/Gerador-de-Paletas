@@ -54,6 +54,13 @@ class MainWindow(ctk.CTk):
         )
         self.btn_preview_mode.pack(side="left", padx=5, pady=5)
         
+        # --- Theme Toggle ---
+        # Default icon based on current mode (assuming Dark default if System)
+        current_mode = ctk.get_appearance_mode()
+        theme_icon = "☀️" if current_mode == "Light" else "🌙"
+        self.btn_theme = ctk.CTkButton(self.top_frame, text=theme_icon, width=40, command=self.toggle_theme)
+        self.btn_theme.pack(side="right", padx=5, pady=5)
+
         # --- Generate Palettes Button (General) ---
         self.frame_gen_controls = ctk.CTkFrame(self.top_frame, fg_color="transparent")
         self.frame_gen_controls.pack(side="right", padx=10, pady=5)
@@ -504,3 +511,13 @@ class MainWindow(ctk.CTk):
     def enter_preview_mode(self):
         """Open preview mode window"""
         PreviewWindow(self)
+
+    def toggle_theme(self):
+        """Switch between Light and Dark mode"""
+        current_mode = ctk.get_appearance_mode()
+        if current_mode == "Dark":
+            ctk.set_appearance_mode("Light")
+            self.btn_theme.configure(text="☀️")
+        else:
+            ctk.set_appearance_mode("Dark")
+            self.btn_theme.configure(text="🌙")
