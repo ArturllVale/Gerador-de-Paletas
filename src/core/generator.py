@@ -1,7 +1,6 @@
 import os
 import colorsys
 from src.core.pal_handler import PaletteHandler
-from src.core.color_math import apply_adjustments, apply_colorize
 
 class PaletteGenerator:
     def __init__(self, base_palette):
@@ -103,19 +102,28 @@ class PaletteGenerator:
                         if 0 <= idx < 256:
                             color = new_palette[idx]
                             
-                            new_color = apply_colorize(
-                                color,
-                                target_hue=hue_normalized,
-                                target_sat=None,
-                                value_mult=1.0 + group.val_shift + iter_val_shift
-                            )
+                            # Optimization: Combine apply_colorize and saturation shift to avoid double conversion
+                            # Get original HSV
+                            r, g, b = color[0]/255.0, color[1]/255.0, color[2]/255.0
+                            h, s, v = colorsys.rgb_to_hsv(r, g, b)
                             
-                            if abs(iter_sat_shift) > 0 or abs(group.sat_shift) > 0:
-                                r, g, b = new_color[0]/255, new_color[1]/255, new_color[2]/255
-                                h, s, v = colorsys.rgb_to_hsv(r, g, b)
-                                s = max(0, min(1, s + group.sat_shift + iter_sat_shift))
-                                r, g, b = colorsys.hsv_to_rgb(h, s, v)
-                                new_color = (int(r*255), int(g*255), int(b*255))
+                            # Calculate new Saturation
+                            # apply_colorize uses 's' as base (target_sat=None)
+                            # Logic from generator adds shifts to the result
+                            sat_shift_total = group.sat_shift + iter_sat_shift
+                            new_s = max(0.0, min(1.0, s + sat_shift_total))
+
+                            # Calculate new Value
+                            # apply_colorize multiplies v by value_mult
+                            val_mult_total = 1.0 + group.val_shift + iter_val_shift
+                            new_v = max(0.0, min(1.0, v * val_mult_total))
+
+                            # Target Hue is passed directly
+                            new_h = hue_normalized
+
+                            # Convert back to RGB
+                            r_out, g_out, b_out = colorsys.hsv_to_rgb(new_h, new_s, new_v)
+                            new_color = (int(r_out*255), int(g_out*255), int(b_out*255))
                             
                             new_palette[idx] = new_color
             
