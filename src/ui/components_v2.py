@@ -77,6 +77,8 @@ class GroupManagementFrame(ctk.CTkFrame):
             self.on_deselect()
 
 
+from src.ui.icons import IconManager
+
 class GradientEditor(ctk.CTkFrame):
     """A widget for editing a gradient - define first and last color, auto-interpolate middle colors"""
     
@@ -90,13 +92,20 @@ class GradientEditor(ctk.CTkFrame):
     
     def __init__(self, master, on_change_callback=None, **kwargs):
         super().__init__(master, **kwargs)
+        self.icon_manager = IconManager()
         
         self.on_change_callback = on_change_callback
         self.first_color = (255, 200, 150)  # Light color
         self.last_color = (80, 30, 10)      # Dark color
         
         # Title
-        self.lbl_title = ctk.CTkLabel(self, text="🎨 Degradê Fixo:", font=("Roboto", 11, "bold"))
+        self.lbl_title = ctk.CTkLabel(
+            self,
+            text="Degradê Fixo:",
+            image=self.icon_manager.get_icon("art", size=(16, 16)),
+            compound="left",
+            font=("Roboto", 11, "bold")
+        )
         self.lbl_title.pack(anchor="w", padx=5, pady=(5, 2))
         
         # Presets frame
@@ -267,6 +276,7 @@ class GradientEditor(ctk.CTkFrame):
 class GroupSettingsFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.icon_manager = IconManager()
         
         self.current_group = None
         self.on_change_callback = None
@@ -292,14 +302,25 @@ class GroupSettingsFrame(ctk.CTkFrame):
         self.gradient_editor.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
         
         # Preview Hue (visualization only)
-        self.lbl_hue_preview = ctk.CTkLabel(self, text="🎨 Cor (Visualização):")
+        self.lbl_hue_preview = ctk.CTkLabel(
+            self,
+            text="Cor (Visualização):",
+            image=self.icon_manager.get_icon("art", size=(16, 16)),
+            compound="left"
+        )
         self.lbl_hue_preview.grid(row=5, column=0, columnspan=2, padx=10, pady=(10,0), sticky="w")
         
         self.slider_h_start = ctk.CTkSlider(self, from_=0.0, to=1.0)
         self.slider_h_start.grid(row=6, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
         
         # Hue Range for Generation - Color Pickers
-        self.lbl_hue_range = ctk.CTkLabel(self, text="🌈 Faixa de Cores (Geração):", font=("Roboto", 11, "bold"))
+        self.lbl_hue_range = ctk.CTkLabel(
+            self,
+            text="Faixa de Cores (Geração):",
+            image=self.icon_manager.get_icon("rainbow", size=(16, 16)),
+            compound="left",
+            font=("Roboto", 11, "bold")
+        )
         self.lbl_hue_range.grid(row=7, column=0, columnspan=2, padx=10, pady=(15,0), sticky="w")
         
         self.frame_hue_range = ctk.CTkFrame(self, fg_color="transparent")
@@ -343,13 +364,23 @@ class GroupSettingsFrame(ctk.CTkFrame):
         self.lbl_hue_info.grid(row=9, column=0, columnspan=2, padx=10, pady=0, sticky="w")
         
         # Sat
-        self.lbl_sat = ctk.CTkLabel(self, text="💧 Saturação:")
+        self.lbl_sat = ctk.CTkLabel(
+            self,
+            text="Saturação:",
+            image=self.icon_manager.get_icon("water", size=(16, 16)),
+            compound="left"
+        )
         self.lbl_sat.grid(row=10, column=0, padx=10, pady=(10,0), sticky="w")
         self.slider_sat = ctk.CTkSlider(self, from_=-1.0, to=1.0)
         self.slider_sat.grid(row=11, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
         
         # Val
-        self.lbl_val = ctk.CTkLabel(self, text="☀️ Brilho:")
+        self.lbl_val = ctk.CTkLabel(
+            self,
+            text="Brilho:",
+            image=self.icon_manager.get_icon("sun", size=(16, 16)),
+            compound="left"
+        )
         self.lbl_val.grid(row=12, column=0, padx=10, pady=0, sticky="w")
         self.slider_val = ctk.CTkSlider(self, from_=-1.0, to=1.0)
         self.slider_val.grid(row=13, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
@@ -502,12 +533,12 @@ class GroupSettingsFrame(ctk.CTkFrame):
         # Change labels based on mode
         is_colorize = self.switch_mode.get() == 1
         if is_colorize:
-            self.lbl_hue_preview.configure(text="🎨 Cor Alvo (Visualização):")
-            self.lbl_sat.configure(text="💧 Saturação Alvo:")
+            self.lbl_hue_preview.configure(text="Cor Alvo (Visualização):")
+            self.lbl_sat.configure(text="Saturação Alvo:")
             self.slider_sat.configure(from_=0.0, to=1.0)
         else:
-            self.lbl_hue_preview.configure(text="🎨 Cor (Visualização):")
-            self.lbl_sat.configure(text="💧 Saturação:")
+            self.lbl_hue_preview.configure(text="Cor (Visualização):")
+            self.lbl_sat.configure(text="Saturação:")
             self.slider_sat.configure(from_=-1.0, to=1.0)
             
     def _update_name(self, event):
