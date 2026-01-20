@@ -16,10 +16,12 @@ from src.ui.components_v2 import GroupManagementFrame, GroupSettingsFrame
 from src.ui.preview import SpritePreview
 from src.ui.preview_window import PreviewWindow
 from src.ui.class_selector import ClassSelectorWindow
+from src.ui.icons import IconManager
 
 class MainWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
+        self.icon_manager = IconManager()
 
         self.title("RO Palette Generator")
         self.geometry("1100x900")
@@ -47,7 +49,9 @@ class MainWindow(ctk.CTk):
         
         self.btn_preview_mode = ctk.CTkButton(
             self.top_frame, 
-            text="🎨 Modo Preview", 
+            text="Modo Preview",
+            image=self.icon_manager.get_icon("preview"),
+            compound="left",
             command=self.enter_preview_mode,
             fg_color="#E07A5F",  # Orange
             hover_color="#C0583D"
@@ -57,8 +61,14 @@ class MainWindow(ctk.CTk):
         # --- Theme Toggle ---
         # Default icon based on current mode (assuming Dark default if System)
         current_mode = ctk.get_appearance_mode()
-        theme_icon = "☀️" if current_mode == "Light" else "🌙"
-        self.btn_theme = ctk.CTkButton(self.top_frame, text=theme_icon, width=40, command=self.toggle_theme)
+        theme_icon_name = "theme_light" if current_mode == "Light" else "theme_dark"
+        self.btn_theme = ctk.CTkButton(
+            self.top_frame,
+            text="",
+            image=self.icon_manager.get_icon(theme_icon_name),
+            width=40,
+            command=self.toggle_theme
+        )
         self.btn_theme.pack(side="right", padx=5, pady=5)
 
         # --- Generate Palettes Button (General) ---
@@ -85,7 +95,9 @@ class MainWindow(ctk.CTk):
         
         self.btn_generate = ctk.CTkButton(
             self.frame_gen_controls, 
-            text="🎲 Gerar Paletas", 
+            text="Gerar Paletas",
+            image=self.icon_manager.get_icon("generate"),
+            compound="left",
             command=self.generate_all_groups,
             fg_color="#4CAF50",
             hover_color="#388E3C",
@@ -215,16 +227,37 @@ class MainWindow(ctk.CTk):
         self.frame_nav = ctk.CTkFrame(self.right_col, fg_color="transparent")
         self.frame_nav.grid(row=2, column=0, pady=5)
         
-        self.btn_prev_frame = ctk.CTkButton(self.frame_nav, text="◀", width=40, command=self._prev_frame)
+        self.btn_prev_frame = ctk.CTkButton(
+            self.frame_nav,
+            text="",
+            image=self.icon_manager.get_icon("prev"),
+            width=40,
+            command=self._prev_frame
+        )
         self.btn_prev_frame.pack(side="left", padx=5)
         
         self.lbl_frame_info = ctk.CTkLabel(self.frame_nav, text="Frame: 0/0")
         self.lbl_frame_info.pack(side="left", padx=10)
         
-        self.btn_next_frame = ctk.CTkButton(self.frame_nav, text="▶", width=40, command=self._next_frame)
+        self.btn_next_frame = ctk.CTkButton(
+            self.frame_nav,
+            text="",
+            image=self.icon_manager.get_icon("next"),
+            width=40,
+            command=self._next_frame
+        )
         self.btn_next_frame.pack(side="left", padx=5)
         
-        self.btn_play = ctk.CTkButton(self.frame_nav, text="▶ Play", width=60, command=self._toggle_play, fg_color="#2CC985", hover_color="#229965")
+        self.btn_play = ctk.CTkButton(
+            self.frame_nav,
+            text="Play",
+            image=self.icon_manager.get_icon("play"),
+            compound="left",
+            width=60,
+            command=self._toggle_play,
+            fg_color="#2CC985",
+            hover_color="#229965"
+        )
         self.btn_play.pack(side="left", padx=10)
     
     def _on_class_toggle(self, name, var):
@@ -497,10 +530,20 @@ class MainWindow(ctk.CTk):
     def _toggle_play(self):
         self.is_playing = not self.is_playing
         if self.is_playing:
-            self.btn_play.configure(text="⏸ Pause", fg_color="#FF5555", hover_color="#CC0000")
+            self.btn_play.configure(
+                text="Pause",
+                image=self.icon_manager.get_icon("pause"),
+                fg_color="#FF5555",
+                hover_color="#CC0000"
+            )
             self._animate_loop()
         else:
-            self.btn_play.configure(text="▶ Play", fg_color="#2CC985", hover_color="#229965")
+            self.btn_play.configure(
+                text="Play",
+                image=self.icon_manager.get_icon("play"),
+                fg_color="#2CC985",
+                hover_color="#229965"
+            )
     
     def _animate_loop(self):
         if self.is_playing:
@@ -517,7 +560,7 @@ class MainWindow(ctk.CTk):
         current_mode = ctk.get_appearance_mode()
         if current_mode == "Dark":
             ctk.set_appearance_mode("Light")
-            self.btn_theme.configure(text="☀️")
+            self.btn_theme.configure(image=self.icon_manager.get_icon("theme_light"))
         else:
             ctk.set_appearance_mode("Dark")
-            self.btn_theme.configure(text="🌙")
+            self.btn_theme.configure(image=self.icon_manager.get_icon("theme_dark"))
