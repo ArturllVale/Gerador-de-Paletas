@@ -51,6 +51,7 @@ Ideal para **desenvolvedores de servidores privados**, **designers de customiza�
 - Visualização de todos os frames do sprite
 - Navegação entre frames com botões ◀ ▶
 - Preview em tempo real das alterações
+- **Animação**: Reproduza as animações do sprite (Play/Pause) diretamente na interface
 
 ### 🎨 Seleção Inteligente de Cores
 - **Grid de paleta 16x16** mostrando todas as 256 cores
@@ -69,7 +70,7 @@ Ideal para **desenvolvedores de servidores privados**, **designers de customiza�
   - Cores diferentes = apenas variações entre as duas cores
 - **Saturação**: Ajuste a intensidade das cores (-1.0 a +1.0)
 - **Brilho**: Ajuste a luminosidade das cores (-1.0 a +1.0)
-- **Quantidade**: Gere de 1 até 1000+ paletas únicas
+- **Quantidade**: Sistema de **Amostragem Estratificada** que garante **zero repetições**, dividindo o espectro matematicamente pelo número exato de variações solicitadas. Se você pedir 1000 paletas, terá 1000 cores distintas.
 
 ### 🔄 Modo Colorir
 - Modo especial para recolorir áreas brancas/cinzas
@@ -328,7 +329,8 @@ palleteditor/
 
 ### Cores Únicas Garantidas
 - Para gerar 100 cores completamente diferentes, deixe as cores "De" e "Até" **iguais** (vermelho/vermelho)
-- O sistema distribuirá automaticamente em 360° do espectro
+- O novo algoritmo de **Amostragem Estratificada** garante que se você pedir 100 variações, terá 100 cores maximamente distantes umas das outras.
+- Não existem mais "repetições" de tons próximos em lotes pequenos.
 
 ### Tons Específicos
 - Para gerar **apenas azuis**: De = Azul Claro, Até = Azul Escuro
