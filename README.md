@@ -77,6 +77,16 @@ Ideal para **desenvolvedores de servidores privados**, **designers de customiza�
 - Define cor alvo e saturação específica
 - Ideal para sprites com áreas neutras
 
+### 👥 Geração Multiclasse
+- **Seleção de Classes**: Escolha para quais classes gerar paletas (Cavaleiro, Mago, etc.)
+- **Variação de Sexo**: Gera arquivos automaticamente com nomenclaturas corretas para masculino (`_³²_`) e feminino (`_¿©_`)
+- **Numeração Personalizada**: Defina o número inicial das paletas (ex: iniciar do 100)
+
+### 🌈 Tons de Pele e Degradês
+- **Degradê Fixo**: Defina cores exatas de início e fim para criar transições perfeitas
+- **Presets de Pele**: Predefinições integradas para tons de pele (Moreno, Negro, etc.)
+- Ideal para manter consistência em grupos como "Corpo" ou "Rosto"
+
 ### 👁️ Modo Preview
 - **Janela separada** para visualização
 - Carregue uma pasta com arquivos `.pal`
@@ -230,35 +240,45 @@ Com um grupo selecionado, você verá as **Configurações do Grupo**:
 - **0**: Sem alteração
 - **+1.0**: Cores mais claras
 
-#### Quantidade
-- Digite o número de paletas a gerar (1-1000+)
-- Cada paleta terá uma cor única dentro do espectro escolhido
+#### 🔒 Degradê Fixo (Tons de Pele)
+- Ative a opção **"Cor Fixa (Manual)"** para definir manualmente a cor inicial e final.
+- **Predefinição**: Use o menu para selecionar tons de pele comuns (Moreno, Negro, etc.).
+- A geração interpolará suavemente entre as duas cores escolhidas, ignorando a saturação/brilho aleatórios.
+
+#### Quantidade e Numeração
+- **Quantidade**: Digite o número de paletas a gerar (1-1000+)
+- **Início**: (Opcional) Defina o número da primeira paleta (ex: se colocar 100 e gerar 5, criará 100, 101, 102, 103, 104).
 
 ### 5. Gerando Paletas
 
-1. Configure as opções desejadas
-2. Clique no botão **"Gerar Paletas"** (laranja)
-3. Selecione a **pasta de destino** onde os arquivos serão salvos
-4. Aguarde a geração completar
+1. Configure as opções desejadas para cada grupo
+2. (Opcional) Clique em **"Selecionar Classes"** na barra lateral para escolher classes específicas.
+3. Defina o **Número Inicial** (opcional) nas configurações gerais.
+4. Clique no botão **"Gerar Paletas"** (laranja)
+5. Selecione a **pasta de destino** onde os arquivos serão salvos
 
 **Arquivos gerados:**
-- `NomeDoSprite_NomeDoGrupo_0.pal`
-- `NomeDoSprite_NomeDoGrupo_1.pal`
-- `NomeDoSprite_NomeDoGrupo_2.pal`
-- ... (até a quantidade especificada)
-- `NomeDoSprite_NomeDoGrupo_X.png` (preview de cada paleta)
+O gerador cria arquivos compatíveis com o cliente do RO:
+- Se classes selecionadas: `NomeClasse_³²_Num.pal` (M) e `NomeClasse_¿©_Num.pal` (F)
+- Se nenhuma classe: `NomeDoSprite_NomeDoGrupo_Num.pal`
 
 ### 6. Modo Preview
 
-O **Modo Preview** permite visualizar paletas geradas aplicadas ao sprite:
+O **Modo Preview** é uma ferramenta completa para validar suas criações:
 
-1. Clique no botão **"🎨 Modo Preview"** (laranja)
-2. Uma nova janela será aberta
-3. Clique em **"📁 Carregar SPR"** para selecionar um sprite
-4. Clique em **"📂 Carregar Pasta de Paletas"** para selecionar a pasta com os `.pal`
-5. Use os botões **◀ ▶** para navegar:
-   - **Paleta**: Alterna entre os arquivos de paleta
-   - **Frame**: Alterna entre os frames do sprite
+1. Clique no botão **"🎨 Modo Preview"** na tela principal.
+2. **Carregar Arquivos**:
+   - **SPR**: Carregue o sprite base.
+   - **Pasta**: Selecione a pasta onde gerou seus arquivos `.pal`.
+3. **Navegação**:
+   - **Paleta**: Navegue entre os arquivos `.pal` gerados na pasta.
+   - **Frame**: Avance/Retroceda frame a frame.
+4. **Animação**:
+   - Escolha uma ação (Idle, Walk, Attack, etc.) no menu dropdown.
+   - Clique em **Play** para ver a animação em loop.
+   - Use o slider de **Vel** para ajustar a velocidade.
+5. **Zoom**: Amplie a visualização com os botões `+` e `-`.
+
 
 ---
 
