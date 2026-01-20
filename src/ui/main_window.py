@@ -2,12 +2,14 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import os
 import glob
+import colorsys
 
 from src.core.parsers.spr import SprParser
 from src.core.parsers.act import ActParser
 from src.core.logic.state import ProjectState
 from src.core.generator import PaletteGenerator
 from src.core.pal_handler import PaletteHandler
+from src.core.color_math import apply_adjustments, apply_colorize
 
 from src.ui.visualizer import PaletteVisualizer
 from src.ui.components_v2 import GroupManagementFrame, GroupSettingsFrame
@@ -34,6 +36,7 @@ class MainWindow(ctk.CTk):
         # Frame index for preview
         self.current_frame_index = 0
         self.is_playing = False
+        self._preview_pending = None  # For throttled preview updates
         
         # --- Top Menu ---
         self.top_frame = ctk.CTkFrame(self, height=40)
@@ -340,6 +343,15 @@ class MainWindow(ctk.CTk):
             self._sync_selection_to_group()
             
     def _update_preview(self):
+        """Throttled preview update - coalesces rapid calls"""
+        if self._preview_pending:
+            self.after_cancel(self._preview_pending)
+        self._preview_pending = self.after(16, self._do_update_preview)
+    
+    def _do_update_preview(self):
+        """Actual preview update logic"""
+        self._preview_pending = None
+        
         if not self.project_state.spr_parser or not self.project_state.spr_parser.images:
             self.lbl_frame_info.configure(text="Frame: 0/0")
             return
@@ -358,10 +370,6 @@ class MainWindow(ctk.CTk):
         
         # 2. Apply Group Transformations to Palette
         temp_pal = list(self.project_state.spr_parser.palette) # [r,g,b,a]
-        
-        # Apply logic for "Progress 100%" or just current settings?
-        # User wants to see what the settings do.
-        # Let's apply the current settings as if they were fully applied.
         
         for group in self.project_state.groups:
             # Check if group has fixed gradient
@@ -382,7 +390,6 @@ class MainWindow(ctk.CTk):
                             base_col = fixed_gradient[gradient_pos]
                             
                             # Apply saturation and brightness adjustments
-                            import colorsys
                             r, g, b = base_col[0]/255, base_col[1]/255, base_col[2]/255
                             h, s, v = colorsys.rgb_to_hsv(r, g, b)
                             
@@ -399,7 +406,6 @@ class MainWindow(ctk.CTk):
                 
                 for i in group.indices:
                     if 0 <= i < 256:
-                        from src.core.color_math import apply_adjustments, apply_colorize
                         orig = temp_pal[i][:3]
                         
                         if getattr(group, 'mode', 'hsv') == 'colorize':

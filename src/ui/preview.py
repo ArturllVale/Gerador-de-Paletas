@@ -22,6 +22,10 @@ class SpritePreview(ctk.CTkFrame):
         self.last_pil_image = None
         self.last_palette = None
         
+        # Palette cache for optimization
+        self._cached_flat_pal = None
+        self._last_bg_hex = None
+        
         self.scale = 2.0 # Default zoom
         
         # Callback for pixel click: receives palette index
@@ -62,18 +66,20 @@ class SpritePreview(ctk.CTkFrame):
             # Get background color from index 0
             bg_color = palette[0][:3] if palette else (255, 255, 255)
             bg_hex = f"#{bg_color[0]:02x}{bg_color[1]:02x}{bg_color[2]:02x}"
-            self.configure(fg_color=bg_hex)
-            self.container.configure(fg_color=bg_hex)
-            self.image_label.configure(fg_color=bg_hex)
             
-            # Flatten palette for PIL: [r,g,b, r,g,b...]
-            flat_pal = []
-            for color in palette:
-                flat_pal.extend(color[:3]) # Take first 3 RGB
+            # Only update fg_color if changed (avoids redundant widget updates)
+            if bg_hex != self._last_bg_hex:
+                self._last_bg_hex = bg_hex
+                self.configure(fg_color=bg_hex)
+                self.container.configure(fg_color=bg_hex)
+                self.image_label.configure(fg_color=bg_hex)
             
-            # Ensure 256 colors (768 ints)
-            while len(flat_pal) < 768:
-                flat_pal.extend([0, 0, 0])
+            # Flatten palette for PIL using list comprehension (faster)
+            flat_pal = [c for color in palette for c in color[:3]]
+            
+            # Pad to 768 if needed
+            if len(flat_pal) < 768:
+                flat_pal.extend([0] * (768 - len(flat_pal)))
              
             # If image is P mode
             if img.mode == 'P':
@@ -140,4 +146,3 @@ class SpritePreview(ctk.CTkFrame):
             # Call callback if set
             if self.on_pixel_click:
                 self.on_pixel_click(palette_index)
-

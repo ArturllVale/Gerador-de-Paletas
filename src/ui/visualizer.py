@@ -71,19 +71,20 @@ class PaletteVisualizer(ctk.CTkFrame):
         self._redraw_colors()
         
     def _redraw_colors(self):
+        # Pre-compute references for faster access in loop
+        selected = self.selected_indices
+        rect_ids = self.rect_ids
+        canvas_itemconfig = self.canvas.itemconfig
+        
         for i, color in enumerate(self.palette):
-            r, g, b = color
-            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+            is_sel = i in selected
             
-            # Check if selected
-            outline = "#00ff00" if i in self.selected_indices else "#404040"
-            width = 2 if i in self.selected_indices else 1
-            
-            self.canvas.itemconfig(
-                self.rect_ids[i], 
+            canvas_itemconfig(
+                rect_ids[i], 
                 fill=hex_color, 
-                outline=outline,
-                width=width
+                outline="#00ff00" if is_sel else "#404040",
+                width=2 if is_sel else 1
             )
 
     def _get_index_at_pos(self, x, y):
