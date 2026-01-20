@@ -77,6 +77,13 @@ class MainWindow(ctk.CTk):
             width=140
         )
         self.btn_generate.pack(side="left", padx=5)
+
+        # --- Random options ---
+        self.chk_rand_sat = ctk.CTkCheckBox(self.frame_gen_controls, text="Sat. Aleatória", width=100)
+        self.chk_rand_sat.pack(side="left", padx=5)
+        
+        self.chk_rand_bri = ctk.CTkCheckBox(self.frame_gen_controls, text="Brilho Aleatório", width=100)
+        self.chk_rand_bri.pack(side="left", padx=5)
         
         self.lbl_info = ctk.CTkLabel(self.top_frame, text="Nenhum arquivo carregado")
         self.lbl_info.pack(side="left", padx=10)
@@ -373,7 +380,10 @@ class MainWindow(ctk.CTk):
                 base_filename=self.current_filename,
                 count=count,
                 groups=self.project_state.groups,
-                generate_preview=True
+
+                generate_preview=True,
+                random_saturation=self.chk_rand_sat.get() == 1,
+                random_brightness=self.chk_rand_bri.get() == 1
             )
             messagebox.showinfo("Sucesso", f"Geradas {count} variações!")
             os.startfile(output)

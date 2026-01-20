@@ -1,4 +1,5 @@
 import os
+import colorsys
 from src.core.pal_handler import PaletteHandler
 from src.core.color_math import apply_adjustments, apply_colorize
 
@@ -11,7 +12,9 @@ class PaletteGenerator:
                        base_filename, 
                        count, 
                        groups, # List of ColorGroup
-                       generate_preview=False):
+                       generate_preview=False,
+                       random_saturation=False,
+                       random_brightness=False):
         """
         Generates 'count' unique variations based on groups settings.
         Distributes hue evenly across 360° for guaranteed uniqueness.
@@ -29,6 +32,12 @@ class PaletteGenerator:
         for i in range(count):
             new_palette = list(self.base_palette) # Copy original
             
+            # Generate random adjustment factors for this iteration if enabled
+            # Saturation: +/- 0.3 (clamped 0-1 later)
+            # Brightness (Value): +/- 0.15 (clamped 0-1 later)
+            iter_sat_shift = random.uniform(-0.3, 0.3) if random_saturation else 0.0
+            iter_val_shift = random.uniform(-0.15, 0.15) if random_brightness else 0.0
+            
             for g_idx, group in enumerate(groups):
                 # Check if this group has a fixed color
                 is_fixed = getattr(group, 'is_fixed', False)
@@ -37,7 +46,6 @@ class PaletteGenerator:
                     # Use the fixed gradient (8 colors) - apply directly to indices
                     fixed_gradient = getattr(group, 'fixed_gradient', None)
                     if fixed_gradient and len(fixed_gradient) == 8:
-                        import colorsys
                         # Map the gradient to the group indices
                         sorted_indices = sorted(group.indices)
                         num_colors = len(sorted_indices)
@@ -54,8 +62,8 @@ class PaletteGenerator:
                                 h, s, v = colorsys.rgb_to_hsv(r, g, b)
                                 
                                 # Apply shifts
-                                s = max(0, min(1, s + group.sat_shift))
-                                v = max(0, min(1, v * (1 + group.val_shift)))
+                                s = max(0, min(1, s + group.sat_shift + iter_sat_shift))
+                                v = max(0, min(1, v * (1 + group.val_shift + iter_val_shift)))
                                 
                                 r, g, b = colorsys.hsv_to_rgb(h, s, v)
                                 new_palette[idx] = (int(r*255), int(g*255), int(b*255))
@@ -112,9 +120,17 @@ class PaletteGenerator:
                             new_color = apply_colorize(
                                 color,
                                 target_hue=hue_normalized,
-                                target_sat=None,  # Keep original saturation
-                                value_mult=1.0 + group.val_shift
+                                target_sat=None, # Saturation handled below if using shifts, but maximize robustness
+                                value_mult=1.0 + group.val_shift + iter_val_shift
                             )
+                            
+                            # If we need to apply saturation shift to the result of colorize
+                            if abs(iter_sat_shift) > 0 or abs(group.sat_shift) > 0:
+                                r, g, b = new_color[0]/255, new_color[1]/255, new_color[2]/255
+                                h, s, v = colorsys.rgb_to_hsv(r, g, b)
+                                s = max(0, min(1, s + group.sat_shift + iter_sat_shift))
+                                r, g, b = colorsys.hsv_to_rgb(h, s, v)
+                                new_color = (int(r*255), int(g*255), int(b*255))
                             
                             new_palette[idx] = new_color
             

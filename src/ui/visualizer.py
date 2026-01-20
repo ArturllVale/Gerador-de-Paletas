@@ -19,7 +19,7 @@ class PaletteVisualizer(ctk.CTkFrame):
         self.canvas_width = self.cell_size * self.grid_size
         self.canvas_height = self.cell_size * self.grid_size
         
-        self.canvas = tk.Canvas(
+        self.canvas = ctk.CTkCanvas(
             self, 
             width=self.canvas_width, 
             height=self.canvas_height,
