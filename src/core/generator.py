@@ -75,9 +75,31 @@ class PaletteGenerator:
                         # Wrap around (e.g., from 350° to 30° = 40° range through red)
                         hue_range = hue_range + 360
                     
-                    # Distribute evenly within the specified range, but with random phase shift per group
-                    step_fraction = (i / max(count, 1) + group_phase_shifts[g_idx]) % 1.0
-                    hue_degrees = hue_start + (hue_range * step_fraction)
+                    # Stratified Sampling: Divide range into 'count' equal slices
+                    # Pick one random point within each slice to ensure separation
+                    # Then shuffle to randomize the output order
+                    step = hue_range / max(count, 1)
+                    # Pre-calculate all hue offsets for this group
+                    if not hasattr(self, '_group_hues'):
+                        self._group_hues = {}
+                    
+                    if g_idx not in self._group_hues:
+                        # Generate linear slices with random jitter within the slice
+                        # jitter = random.uniform(0, step) or center? 
+                        # To maximize distinctiveness, using center + small jitter is safer than full random
+                        # But user wants "random variations". 
+                        # Method: take center of slice.
+                        slices = []
+                        for k in range(count):
+                            slice_start = hue_start + (k * step)
+                            # Add small random jitter (up to 80% of step) to avoid looking too mechanical
+                            jitter = random.uniform(0, step * 0.8) 
+                            slices.append(slice_start + jitter)
+                        
+                        random.shuffle(slices)
+                        self._group_hues[g_idx] = slices
+                        
+                    hue_degrees = self._group_hues[g_idx][i]
 
                     hue_degrees = hue_degrees % 360  # Normalize to 0-360
                     hue_normalized = hue_degrees / 360.0  # 0.0 to 1.0
