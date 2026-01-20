@@ -101,7 +101,7 @@ class GradientEditor(ctk.CTkFrame):
         # Title
         self.lbl_title = ctk.CTkLabel(
             self,
-            text="Degradê Fixo:",
+            text=" Degradê Fixo:",
             image=self.icon_manager.get_icon("art", size=(16, 16)),
             compound="left",
             font=("Roboto", 11, "bold")
@@ -304,7 +304,7 @@ class GroupSettingsFrame(ctk.CTkFrame):
         # Preview Hue (visualization only)
         self.lbl_hue_preview = ctk.CTkLabel(
             self,
-            text="Cor (Visualização):",
+            text=" Cor (Visualização):",
             image=self.icon_manager.get_icon("art", size=(16, 16)),
             compound="left"
         )
@@ -316,7 +316,7 @@ class GroupSettingsFrame(ctk.CTkFrame):
         # Hue Range for Generation - Color Pickers
         self.lbl_hue_range = ctk.CTkLabel(
             self,
-            text="Faixa de Cores (Geração):",
+            text=" Faixa de Cores (Geração):",
             image=self.icon_manager.get_icon("rainbow", size=(16, 16)),
             compound="left",
             font=("Roboto", 11, "bold")
@@ -366,7 +366,7 @@ class GroupSettingsFrame(ctk.CTkFrame):
         # Sat
         self.lbl_sat = ctk.CTkLabel(
             self,
-            text="Saturação:",
+            text=" Saturação:",
             image=self.icon_manager.get_icon("water", size=(16, 16)),
             compound="left"
         )
@@ -377,7 +377,7 @@ class GroupSettingsFrame(ctk.CTkFrame):
         # Val
         self.lbl_val = ctk.CTkLabel(
             self,
-            text="Brilho:",
+            text=" Brilho:",
             image=self.icon_manager.get_icon("sun", size=(16, 16)),
             compound="left"
         )
