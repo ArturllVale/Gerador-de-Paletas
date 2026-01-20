@@ -13,6 +13,7 @@ from src.ui.visualizer import PaletteVisualizer
 from src.ui.components_v2 import GroupManagementFrame, GroupSettingsFrame
 from src.ui.preview import SpritePreview
 from src.ui.preview_window import PreviewWindow
+from src.ui.class_selector import ClassSelectorWindow
 
 class MainWindow(ctk.CTk):
     def __init__(self):
@@ -61,12 +62,33 @@ class MainWindow(ctk.CTk):
         self.frame_gen_controls = ctk.CTkFrame(self.top_frame, fg_color="transparent")
         self.frame_gen_controls.pack(side="right", padx=10, pady=5)
         
-        self.lbl_count = ctk.CTkLabel(self.frame_gen_controls, text="Quantidade:")
-        self.lbl_count.pack(side="left", padx=5)
+        # Start number
+        self.lbl_start = ctk.CTkLabel(self.frame_gen_controls, text="Iniciar em:")
+        self.lbl_start.pack(side="left", padx=2)
+        
+        self.entry_start = ctk.CTkEntry(self.frame_gen_controls, width=50)
+        self.entry_start.insert(0, "0")
+        self.entry_start.pack(side="left", padx=2)
+        
+        self.lbl_count = ctk.CTkLabel(self.frame_gen_controls, text="Qtd:")
+        self.lbl_count.pack(side="left", padx=2)
         
         self.entry_count = ctk.CTkEntry(self.frame_gen_controls, width=50)
         self.entry_count.insert(0, "10")
-        self.entry_count.pack(side="left", padx=5)
+        self.entry_count.pack(side="left", padx=2)
+        
+        # Class selector button
+        self.btn_class_selector = ctk.CTkButton(
+            self.frame_gen_controls,
+            text="📋 Classes",
+            command=self._open_class_selector,
+            width=80
+        )
+        self.btn_class_selector.pack(side="left", padx=5)
+        
+        # Store selected classes
+        self.selected_classes = set()
+        self.class_selector_window = None
         
         self.btn_generate = ctk.CTkButton(
             self.frame_gen_controls, 
@@ -358,6 +380,13 @@ class MainWindow(ctk.CTk):
         
         self.preview.set_sprite(base_img, palette=temp_pal)
         
+    def _open_class_selector(self):
+        """Open class selector window."""
+        if self.class_selector_window is None or not self.class_selector_window.winfo_exists():
+            self.class_selector_window = ClassSelectorWindow(self, self.selected_classes)
+        else:
+            self.class_selector_window.focus()
+    
     def generate_all_groups(self):
         """Generate palettes considering all groups."""
         if not self.project_state.groups:
@@ -369,9 +398,23 @@ class MainWindow(ctk.CTk):
         except ValueError:
             messagebox.showerror("Erro", "Quantidade inválida")
             return
+        
+        try:
+            start_number = int(self.entry_start.get())
+        except ValueError:
+            start_number = 0
 
         output = filedialog.askdirectory()
         if not output: return
+        
+        # Get selected classes from the class selector
+        # Always include base_filename, plus any selected classes
+        class_names = [self.current_filename]
+        if self.class_selector_window and self.class_selector_window.winfo_exists():
+            self.selected_classes = self.class_selector_window.selected_classes
+        
+        if self.selected_classes:
+            class_names.extend(list(self.selected_classes))
         
         try:
             gen = PaletteGenerator([x[:3] for x in self.project_state.palette])
@@ -380,12 +423,16 @@ class MainWindow(ctk.CTk):
                 base_filename=self.current_filename,
                 count=count,
                 groups=self.project_state.groups,
-
-                generate_preview=True,
+                start_number=start_number,
+                class_names=class_names,
                 random_saturation=self.chk_rand_sat.get() == 1,
                 random_brightness=self.chk_rand_bri.get() == 1
             )
-            messagebox.showinfo("Sucesso", f"Geradas {count} variações!")
+            
+            # Calculate total files generated
+            num_names = len(class_names) if class_names else 1
+            total_files = count * num_names * 2  # *2 for male/female
+            messagebox.showinfo("Sucesso", f"Gerados {total_files} arquivos ({count} variações)!")
             os.startfile(output)
         except Exception as e:
             messagebox.showerror("Erro", str(e))
