@@ -28,15 +28,8 @@ class MainWindow(ctk.CTk):
         self.current_active_group = None
         self.current_filename = "palette"
         
-        # Layout:
-        # Top: File Controls
-        # Row 1: 
-        #   Col 0 (Left): Group Management & Visualizer
-        #   Col 1 (Right): Settings & Preview
-        
+        # Layout: Row 0 = Top Menu, Row 1 = 3 columns
         self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
         
         # Frame index for preview
         self.current_frame_index = 0
@@ -44,7 +37,7 @@ class MainWindow(ctk.CTk):
         
         # --- Top Menu ---
         self.top_frame = ctk.CTkFrame(self, height=40)
-        self.top_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        self.top_frame.grid(row=0, column=0, columnspan=4, sticky="ew", padx=5, pady=5)
         
         self.btn_load_spr = ctk.CTkButton(self.top_frame, text="Carregar SPR", command=self.load_spr)
         self.btn_load_spr.pack(side="left", padx=5, pady=5)
@@ -77,18 +70,8 @@ class MainWindow(ctk.CTk):
         self.entry_count.insert(0, "10")
         self.entry_count.pack(side="left", padx=2)
         
-        # Class selector button
-        self.btn_class_selector = ctk.CTkButton(
-            self.frame_gen_controls,
-            text="📋 Classes",
-            command=self._open_class_selector,
-            width=80
-        )
-        self.btn_class_selector.pack(side="left", padx=5)
-        
         # Store selected classes
         self.selected_classes = set()
-        self.class_selector_window = None
         
         self.btn_generate = ctk.CTkButton(
             self.frame_gen_controls, 
@@ -110,18 +93,28 @@ class MainWindow(ctk.CTk):
         self.lbl_info = ctk.CTkLabel(self.top_frame, text="Nenhum arquivo carregado")
         self.lbl_info.pack(side="left", padx=10)
         
-        # --- Left Column: Groups & Visualizer ---
+        # --- Main Content: 4 columns ---
+        # Column 0: Groups + Visualizer (compact)
+        # Column 1: Settings (compact)
+        # Column 2: Classes (compact)
+        # Column 3: Preview (expands)
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=0)
+        self.grid_columnconfigure(2, weight=0)
+        self.grid_columnconfigure(3, weight=1)
+        
+        # --- Column 0: Groups & Visualizer ---
         self.left_col = ctk.CTkFrame(self, fg_color="transparent")
         self.left_col.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
-        self.left_col.grid_rowconfigure(2, weight=1) # Visualizer expands
+        self.left_col.grid_rowconfigure(2, weight=1)
         
         # Groups
         self.group_mgr = GroupManagementFrame(
             self.left_col, 
-            add_group_cmd=None, # Removed explicit Add button
+            add_group_cmd=None,
             remove_group_cmd=self.remove_group
         )
-        self.group_mgr.btn_add.pack_forget() # Hide the add button
+        self.group_mgr.btn_add.pack_forget()
         self.group_mgr.grid(row=0, column=0, sticky="ew", pady=(0, 10))
         self.group_mgr.on_group_select = self.select_group
         self.group_mgr.on_deselect = self.deselect_group
@@ -130,7 +123,6 @@ class MainWindow(ctk.CTk):
         self.lbl_vis = ctk.CTkLabel(self.left_col, text="Visualizador de Paleta (Selecione cores → Criar Grupo)", font=("Roboto", 12, "bold"))
         self.lbl_vis.grid(row=1, column=0, sticky="w", padx=5)
         
-        # Visualizer Container
         self.vis_frame = ctk.CTkFrame(self.left_col)
         self.vis_frame.grid(row=2, column=0, sticky="nsew")
         
@@ -158,27 +150,60 @@ class MainWindow(ctk.CTk):
         self.visualizer.canvas.bind("<Button-1>", new_click)
         self.visualizer.canvas.bind("<B1-Motion>", new_drag)
         
-        # --- Right Column: Settings & Preview ---
-        self.right_col = ctk.CTkFrame(self, fg_color="transparent")
-        self.right_col.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
-        self.right_col.grid_rowconfigure(1, weight=1)
+        # --- Column 1: Settings ---
+        self.mid_col = ctk.CTkFrame(self, fg_color="transparent")
+        self.mid_col.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
         
-        # Settings
-        self.settings_panel = GroupSettingsFrame(self.right_col)
-        self.settings_panel.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+        self.settings_panel = GroupSettingsFrame(self.mid_col)
+        self.settings_panel.pack(fill="both", expand=True)
         self.settings_panel.on_change_callback = self._update_preview
+        
+        # --- Column 2: Class Selector (embedded) ---
+        self.class_col = ctk.CTkFrame(self)
+        self.class_col.grid(row=1, column=2, sticky="nsew", padx=5, pady=5)
+        
+        self.lbl_classes = ctk.CTkLabel(self.class_col, text="Selecione as classes", font=("Roboto", 12, "bold"))
+        self.lbl_classes.pack(pady=5)
+        
+        # Buttons
+        self.class_btn_frame = ctk.CTkFrame(self.class_col, fg_color="transparent")
+        self.class_btn_frame.pack(fill="x", padx=5)
+        ctk.CTkButton(self.class_btn_frame, text="Todos", width=60, command=self._select_all_classes).pack(side="left", padx=2)
+        ctk.CTkButton(self.class_btn_frame, text="Limpar", width=60, command=self._clear_classes).pack(side="left", padx=2)
+        
+        # Scrollable checkboxes
+        from src.ui.class_selector import RO_CLASSES
+        self.class_scroll = ctk.CTkScrollableFrame(self.class_col, width=200, height=400)
+        self.class_scroll.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        self.class_checkboxes = {}
+        for internal_name, display_name in RO_CLASSES:
+            var = ctk.BooleanVar(value=False)
+            cb = ctk.CTkCheckBox(
+                self.class_scroll,
+                text=display_name,
+                variable=var,
+                command=lambda n=internal_name, v=var: self._on_class_toggle(n, v)
+            )
+            cb.pack(anchor="w", pady=1)
+            self.class_checkboxes[internal_name] = (cb, var)
+        
+        # --- Column 3: Preview ---
+        self.right_col = ctk.CTkFrame(self, fg_color="transparent")
+        self.right_col.grid(row=1, column=3, sticky="nsew", padx=5, pady=5)
+        self.right_col.grid_rowconfigure(1, weight=1)
         
         # Preview
         self.lbl_prev = ctk.CTkLabel(self.right_col, text="Prévia (Clique no sprite para selecionar cor)", font=("Roboto", 12, "bold"))
-        self.lbl_prev.grid(row=1, column=0, sticky="nw", padx=5)
+        self.lbl_prev.grid(row=0, column=0, sticky="nw", padx=5)
         
         self.preview = SpritePreview(self.right_col)
-        self.preview.grid(row=2, column=0, sticky="nsew")
+        self.preview.grid(row=1, column=0, sticky="nsew")
         self.preview.on_pixel_click = self._on_preview_click
         
         # Frame navigation controls
         self.frame_nav = ctk.CTkFrame(self.right_col, fg_color="transparent")
-        self.frame_nav.grid(row=3, column=0, pady=5)
+        self.frame_nav.grid(row=2, column=0, pady=5)
         
         self.btn_prev_frame = ctk.CTkButton(self.frame_nav, text="◀", width=40, command=self._prev_frame)
         self.btn_prev_frame.pack(side="left", padx=5)
@@ -191,6 +216,22 @@ class MainWindow(ctk.CTk):
         
         self.btn_play = ctk.CTkButton(self.frame_nav, text="▶ Play", width=60, command=self._toggle_play, fg_color="#2CC985", hover_color="#229965")
         self.btn_play.pack(side="left", padx=10)
+    
+    def _on_class_toggle(self, name, var):
+        if var.get():
+            self.selected_classes.add(name)
+        else:
+            self.selected_classes.discard(name)
+    
+    def _select_all_classes(self):
+        for internal_name, (cb, var) in self.class_checkboxes.items():
+            var.set(True)
+            self.selected_classes.add(internal_name)
+    
+    def _clear_classes(self):
+        for internal_name, (cb, var) in self.class_checkboxes.items():
+            var.set(False)
+        self.selected_classes.clear()
 
     def load_spr(self):
         path = filedialog.askopenfilename(filetypes=[("RO Sprite", "*.spr")])
@@ -379,13 +420,6 @@ class MainWindow(ctk.CTk):
                         temp_pal[i] = (*new_col, 255)
         
         self.preview.set_sprite(base_img, palette=temp_pal)
-        
-    def _open_class_selector(self):
-        """Open class selector window."""
-        if self.class_selector_window is None or not self.class_selector_window.winfo_exists():
-            self.class_selector_window = ClassSelectorWindow(self, self.selected_classes)
-        else:
-            self.class_selector_window.focus()
     
     def generate_all_groups(self):
         """Generate palettes considering all groups."""
@@ -407,12 +441,8 @@ class MainWindow(ctk.CTk):
         output = filedialog.askdirectory()
         if not output: return
         
-        # Get selected classes from the class selector
-        # Always include base_filename, plus any selected classes
+        # Get selected classes - always include base_filename, plus selected classes
         class_names = [self.current_filename]
-        if self.class_selector_window and self.class_selector_window.winfo_exists():
-            self.selected_classes = self.class_selector_window.selected_classes
-        
         if self.selected_classes:
             class_names.extend(list(self.selected_classes))
         
