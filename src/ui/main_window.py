@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 import os
 import glob
 import colorsys
+import threading
 
 from src.core.parsers.spr import SprParser
 from src.core.parsers.act import ActParser
@@ -492,26 +493,107 @@ class MainWindow(ctk.CTk):
         if self.selected_classes:
             class_names.extend(list(self.selected_classes))
         
+        # Disable button during generation
+        self.btn_generate.configure(state="disabled")
+        
+        # Create progress window
+        self._progress_window = ctk.CTkToplevel(self)
+        self._progress_window.title("Gerando Paletas...")
+        self._progress_window.geometry("400x120")
+        self._progress_window.transient(self)
+        self._progress_window.grab_set()
+        
+        self._progress_label = ctk.CTkLabel(self._progress_window, text="Iniciando...")
+        self._progress_label.pack(pady=10)
+        
+        num_names = len(class_names) if class_names else 1
+        total_files = count * num_names * 2
+        
+        self._progress_bar = ctk.CTkProgressBar(self._progress_window, width=350)
+        self._progress_bar.pack(pady=10)
+        self._progress_bar.set(0)
+        
+        self._progress_detail = ctk.CTkLabel(self._progress_window, text=f"0 / {total_files}")
+        self._progress_detail.pack(pady=5)
+        
+        # Store params for thread
+        self._gen_params = {
+            'output': output,
+            'count': count,
+            'class_names': class_names,
+            'start_number': start_number,
+            'total_files': total_files
+        }
+        
+        # Start generation thread
+        self._gen_thread = threading.Thread(target=self._generate_thread, daemon=True)
+        self._gen_thread.start()
+        
+        # Start polling for completion
+        self._poll_generation()
+    
+    def _generate_thread(self):
+        """Worker thread for palette generation."""
+        params = self._gen_params
+        self._gen_error = None
+        self._gen_current = 0
+        
         try:
             gen = PaletteGenerator([x[:3] for x in self.project_state.palette])
-            gen.generate_batch(
-                output_dir=output,
+            gen.generate_batch_with_progress(
+                output_dir=params['output'],
                 base_filename=self.current_filename,
-                count=count,
+                count=params['count'],
                 groups=self.project_state.groups,
-                start_number=start_number,
-                class_names=class_names,
+                start_number=params['start_number'],
+                class_names=params['class_names'],
                 random_saturation=self.chk_rand_sat.get() == 1,
-                random_brightness=self.chk_rand_bri.get() == 1
+                random_brightness=self.chk_rand_bri.get() == 1,
+                progress_callback=self._update_gen_progress
             )
-            
-            # Calculate total files generated
-            num_names = len(class_names) if class_names else 1
-            total_files = count * num_names * 2  # *2 for male/female
-            messagebox.showinfo("Sucesso", f"Gerados {total_files} arquivos ({count} variações)!")
-            os.startfile(output)
         except Exception as e:
-            messagebox.showerror("Erro", str(e))
+            self._gen_error = str(e)
+    
+    def _update_gen_progress(self, current, total):
+        """Callback from generator thread to update progress."""
+        self._gen_current = current
+        self._gen_total = total
+    
+    def _poll_generation(self):
+        """Poll generation thread and update UI."""
+        if hasattr(self, '_gen_current') and hasattr(self, '_gen_total'):
+            progress = self._gen_current / max(self._gen_total, 1)
+            self._progress_bar.set(progress)
+            self._progress_label.configure(text=f"Gerando paleta {self._gen_current}...")
+            self._progress_detail.configure(text=f"{self._gen_current} / {self._gen_total}")
+        
+        if self._gen_thread.is_alive():
+            self.after(50, self._poll_generation)
+        else:
+            self._finish_generation()
+    
+    def _finish_generation(self):
+        """Called when generation thread finishes."""
+        params = self._gen_params
+        
+        # Close progress window
+        self._progress_window.destroy()
+        
+        # Re-enable button
+        self.btn_generate.configure(state="normal")
+        
+        if self._gen_error:
+            messagebox.showerror("Erro", self._gen_error)
+        else:
+            messagebox.showinfo("Sucesso", f"Gerados {params['total_files']} arquivos ({params['count']} variações)!")
+            os.startfile(params['output'])
+        
+        # Cleanup
+        del self._gen_params
+        del self._gen_thread
+        del self._gen_current
+        del self._gen_total
+        del self._gen_error
 
     def _prev_frame(self):
         if not self.project_state.spr_parser or not self.project_state.spr_parser.images:
