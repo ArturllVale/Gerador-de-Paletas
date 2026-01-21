@@ -56,6 +56,7 @@ Ideal para **desenvolvedores de servidores privados**, **designers de customiza�
 - **Grid de paleta 16x16** mostrando todas as 256 cores
 - **Seleção por clique e arraste** no grid de paleta
 - **Clique no sprite** para selecionar automaticamente a faixa de 8 cores correspondente
+- **Destaque visual**: Ao passar o mouse sobre a paleta, as cores selecionadas piscam no preview, facilitando identificar onde cada tom está sendo usado no sprite
 - Seleção múltipla de índices de cores
 
 ### 📁 Gerenciamento de Grupos

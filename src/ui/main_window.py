@@ -173,6 +173,9 @@ class MainWindow(ctk.CTk):
         self.visualizer.canvas.bind("<Button-1>", new_click)
         self.visualizer.canvas.bind("<B1-Motion>", new_drag)
         
+        # Connect hover to preview highlight
+        self.visualizer.on_hover_callback = self._on_palette_hover
+        
         # --- Column 1: Settings ---
         self.mid_col = ctk.CTkFrame(self, fg_color="transparent")
         self.mid_col.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
@@ -266,6 +269,13 @@ class MainWindow(ctk.CTk):
             self.selected_classes.add(name)
         else:
             self.selected_classes.discard(name)
+    
+    def _on_palette_hover(self, palette_index):
+        """Highlight all selected pixels in preview when hovering over palette."""
+        if palette_index is not None and self.visualizer.selected_indices:
+            self.preview.highlight_pixels(self.visualizer.selected_indices)
+        else:
+            self.preview.highlight_pixels(None)
     
     def _select_all_classes(self):
         for internal_name, (cb, var) in self.class_checkboxes.items():

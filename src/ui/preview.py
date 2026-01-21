@@ -31,6 +31,11 @@ class SpritePreview(ctk.CTkFrame):
         # Callback for pixel click: receives palette index
         self.on_pixel_click = None
         
+        # Highlight state
+        self._highlight_indices = None  # Set of indices to highlight
+        self._highlight_blink_on = False
+        self._highlight_after_id = None
+        
         # Bind click event
         self.image_label.bind("<Button-1>", self._on_click)
         
@@ -146,3 +151,87 @@ class SpritePreview(ctk.CTkFrame):
             # Call callback if set
             if self.on_pixel_click:
                 self.on_pixel_click(palette_index)
+    
+    def highlight_pixels(self, palette_indices):
+        """Highlight pixels matching the given palette indices with blink effect.
+        
+        Args:
+            palette_indices: A single index, set of indices, or None to clear.
+        """
+        # Cancel existing blink
+        if self._highlight_after_id is not None:
+            self.after_cancel(self._highlight_after_id)
+            self._highlight_after_id = None
+        
+        # Normalize to set
+        if palette_indices is None:
+            self._highlight_indices = None
+        elif isinstance(palette_indices, int):
+            self._highlight_indices = {palette_indices}
+        else:
+            self._highlight_indices = set(palette_indices)
+        
+        self._highlight_blink_on = False
+        
+        if not self._highlight_indices or self.original_indexed is None or self.last_palette is None:
+            # Restore original view
+            if self.last_pil_image and self.last_palette:
+                self.set_sprite(self.last_pil_image, self.last_palette)
+            return
+        
+        # Start blink loop
+        self._do_blink()
+    
+    def _do_blink(self):
+        """Toggle highlight state and schedule next blink."""
+        if self._highlight_indices is None:
+            return
+            
+        self._highlight_blink_on = not self._highlight_blink_on
+        self._render_with_highlight()
+        
+        # Schedule next blink (300ms interval)
+        self._highlight_after_id = self.after(300, self._do_blink)
+    
+    def _render_with_highlight(self):
+        """Render sprite with highlighted pixels inverted."""
+        if self.original_indexed is None or self.last_palette is None:
+            return
+            
+        img = self.last_pil_image.copy()
+        
+        if img.mode != 'P':
+            return
+            
+        # Create modified palette
+        modified_pal = list(self.last_palette)
+        
+        if self._highlight_blink_on and self._highlight_indices:
+            for idx in self._highlight_indices:
+                if 0 <= idx < 256:
+                    # Invert/highlight the target color
+                    orig = modified_pal[idx][:3]
+                    # Use bright contrasting color (cyan for dark colors, magenta for bright)
+                    brightness = (orig[0] + orig[1] + orig[2]) / 3
+                    if brightness > 127:
+                        highlight = (255, 0, 255)  # Magenta
+                    else:
+                        highlight = (0, 255, 255)  # Cyan
+                    modified_pal[idx] = (*highlight, 255)
+        
+        # Flatten palette
+        flat_pal = [c for color in modified_pal for c in color[:3]]
+        if len(flat_pal) < 768:
+            flat_pal.extend([0] * (768 - len(flat_pal)))
+        
+        img.putpalette(flat_pal)
+        img = img.convert("RGBA")
+        
+        # Apply scaling
+        if self.scale != 1.0:
+            new_size = (int(img.width * self.scale), int(img.height * self.scale))
+            img = img.resize(new_size, Image.NEAREST)
+        
+        self.current_image = img
+        self.ctk_image = ctk.CTkImage(light_image=img, dark_image=img, size=(img.width, img.height))
+        self.image_label.configure(image=self.ctk_image)

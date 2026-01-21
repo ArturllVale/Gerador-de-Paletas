@@ -15,6 +15,9 @@ class PaletteVisualizer(ctk.CTkFrame):
         self.cell_size = 20
         self.grid_size = 16 # 16x16 = 256
         
+        # Hover callback: called with (palette_index) or (None) on leave
+        self.on_hover_callback = None
+        
         # UI Elements
         self.canvas_width = self.cell_size * self.grid_size
         self.canvas_height = self.cell_size * self.grid_size
@@ -36,6 +39,7 @@ class PaletteVisualizer(ctk.CTkFrame):
         self.canvas.bind("<Button-1>", self._on_click)
         self.canvas.bind("<B1-Motion>", self._on_drag)
         self.canvas.bind("<Motion>", self._on_hover)
+        self.canvas.bind("<Leave>", self._on_leave)
         
         # Initial draw
         self._init_grid()
@@ -120,8 +124,17 @@ class PaletteVisualizer(ctk.CTkFrame):
         if idx is not None:
             r, g, b = self.palette[idx]
             self.info_label.configure(text=f"Index: {idx} | RGB: ({r}, {g}, {b}) | Hex: #{r:02x}{g:02x}{b:02x}")
+            if self.on_hover_callback:
+                self.on_hover_callback(idx)
         else:
             self.info_label.configure(text="")
+            if self.on_hover_callback:
+                self.on_hover_callback(None)
+                
+    def _on_leave(self, event):
+        self.info_label.configure(text="")
+        if self.on_hover_callback:
+            self.on_hover_callback(None)
 
     def _update_single_cell(self, idx):
         outline = "#00ff00" if idx in self.selected_indices else "#404040"
