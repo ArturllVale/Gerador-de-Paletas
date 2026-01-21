@@ -24,7 +24,7 @@ class MainWindow(ctk.CTk):
         self.icon_manager = IconManager()
 
         self.title("RO Palette Generator")
-        self.geometry("1100x900")
+        self.geometry("1300x920")
         
         # Logic State
         self.project_state = ProjectState()
