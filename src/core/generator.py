@@ -132,14 +132,21 @@ class PaletteGenerator:
             
             # Generate files for each class name (or base filename)
             for class_name in names_to_generate:
+                # Strip existing gender suffixes if present to avoid duplication
+                clean_name = class_name
+                if clean_name.endswith("_³²"):
+                    clean_name = clean_name[:-3]
+                elif clean_name.endswith("_¿©"):
+                    clean_name = clean_name[:-3]
+
                 # Male palette: {name}_³²_{n}.pal
-                male_filename = f"{class_name}_³²_{palette_number}.pal"
+                male_filename = f"{clean_name}_³²_{palette_number}.pal"
                 male_path = os.path.join(output_dir, male_filename)
                 PaletteHandler.save(male_path, new_palette)
                 generated_files.append(male_path)
                 
                 # Female palette: {name}_¿©_{n}.pal
-                female_filename = f"{class_name}_¿©_{palette_number}.pal"
+                female_filename = f"{clean_name}_¿©_{palette_number}.pal"
                 female_path = os.path.join(output_dir, female_filename)
                 PaletteHandler.save(female_path, new_palette)
                 generated_files.append(female_path)
