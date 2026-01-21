@@ -3,7 +3,6 @@
 **Editor de Paletas para Ragnarok Online** - Uma ferramenta visual para criar variações de cores em sprites do jogo Ragnarok Online.
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)
 
 ---
