@@ -1,5 +1,6 @@
 import os
 import requests
+import threading
 from PIL import Image
 import customtkinter as ctk
 
@@ -30,6 +31,7 @@ class IconManager:
     def __init__(self, cache_dir="assets/icons"):
         self.cache_dir = cache_dir
         self.images = {}
+        self._download_threads = {}
 
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
@@ -37,7 +39,8 @@ class IconManager:
     def get_icon(self, name, size=(20, 20)):
         """
         Returns a CTkImage for the given icon name.
-        Downloads it if not present.
+        Downloads it in background if not present.
+        Returns None if downloading.
         """
         if name not in self.ICONS:
             print(f"Warning: Icon '{name}' not defined in IconManager.")
@@ -49,15 +52,14 @@ class IconManager:
 
         # Download if missing
         if not os.path.exists(filepath):
-            success = self._download_icon(codepoint, filepath)
-            if not success:
-                return None
+            if codepoint not in self._download_threads:
+                 # Start download in a separate thread
+                 t = threading.Thread(target=self._download_icon, args=(codepoint, filepath))
+                 t.start()
+                 self._download_threads[codepoint] = t
+            return None
 
         # Load and cache CTkImage
-        # Note: We create a new CTkImage each time or cache it?
-        # CTkImage objects need to be kept alive.
-        # However, size might vary. So we might need to cache by (name, size).
-
         cache_key = (name, size)
         if cache_key in self.images:
             return self.images[cache_key]
@@ -68,6 +70,7 @@ class IconManager:
             self.images[cache_key] = ctk_image
             return ctk_image
         except Exception as e:
+            # If image is corrupted or empty (failed download), maybe remove it?
             print(f"Error loading icon image {filepath}: {e}")
             return None
 
@@ -78,10 +81,12 @@ class IconManager:
             if response.status_code == 200:
                 with open(filepath, "wb") as f:
                     f.write(response.content)
-                return True
             else:
                 print(f"Failed to download icon {codepoint}: HTTP {response.status_code}")
-                return False
         except Exception as e:
             print(f"Failed to download icon {codepoint}: {e}")
-            return False
+        finally:
+            # Remove from active threads list so we can retry later if it failed
+            # or just to clean up
+            if codepoint in self._download_threads:
+                del self._download_threads[codepoint]

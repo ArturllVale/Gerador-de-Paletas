@@ -21,9 +21,13 @@ class PaletteHandler:
         with open(file_path, 'rb') as f:
             data = f.read(1024) # Read only the first 1024 bytes relevant for the palette
             
-            for i in range(0, 1024, 4):
-                # Unpack 4 bytes: Red, Green, Blue, Reserved (usually 0)
-                r, g, b, _ = struct.unpack('BBBB', data[i:i+4])
+            # Unpack all 1024 bytes at once
+            # Each color is 4 bytes: R, G, B, Reserved
+            # 256 colors * 4 bytes = 1024 bytes
+            # 'BBBB' * 256
+
+            # Using iter_unpack is cleaner in Py3
+            for r, g, b, _ in struct.iter_unpack('BBBB', data):
                 palette.append((r, g, b))
         
         return palette
@@ -37,14 +41,18 @@ class PaletteHandler:
         if len(palette) != 256:
             raise ValueError(f"Invalid palette length: {len(palette)}. Expected 256 colors.")
 
+        # Pre-allocate buffer logic or pack all at once
+        # Construct a bytearray or a list of bytes
+
+        # Optimized: create a flat list of values to pack
+        values = []
+        for idx, (r, g, b) in enumerate(palette):
+            reserved = 0 if idx == 0 else 255
+            values.extend((r, g, b, reserved))
+
+        # Pack all 1024 bytes at once
+        # 'BBBB' * 256 = 'B' * 1024
+        packed_data = struct.pack('B' * 1024, *values)
+
         with open(file_path, 'wb') as f:
-            for idx, color in enumerate(palette):
-                r, g, b = color
-                
-                # Match Reference Logic (PaletteSelector.xaml.cs):
-                # Sets alpha (4th byte) to 255 for all, except index 0 which is 0.
-                reserved = 0 if idx == 0 else 255
-                
-                # Pack as R, G, B, Reserved/Alpha
-                packed_data = struct.pack('BBBB', r, g, b, reserved)
-                f.write(packed_data)
+            f.write(packed_data)
