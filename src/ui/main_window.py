@@ -197,7 +197,7 @@ class MainWindow(ctk.CTk):
         self.class_btn_frame = ctk.CTkFrame(self.class_col, fg_color="transparent")
         self.class_btn_frame.pack(fill="x", padx=5)
         ctk.CTkButton(self.class_btn_frame, text="Todos", width=60, command=self._select_all_classes).pack(side="left", padx=2)
-        ctk.CTkButton(self.class_btn_frame, text="Limpar", width=60, command=self._clear_classes).pack(side="left", padx=2)
+        ctk.CTkButton(self.class_btn_frame, text="Limpar", width=60, command=self._clear_classes, fg_color="#D02752", hover_color="#8A244B").pack(side="left", padx=2)
         
         # Scrollable checkboxes
         from src.ui.class_selector import RO_CLASSES

@@ -17,7 +17,7 @@ class ColorPickerDialog(ctk.CTkToplevel):
         self.title(title)
         self.geometry("300x420")
         self.resizable(False, False)
-        self.configure(fg_color="#2b2b2b")
+        # fg_color is now inherited from theme.json CTkToplevel settings
         
         # Make modal
         self.transient(master)
@@ -37,14 +37,18 @@ class ColorPickerDialog(ctk.CTkToplevel):
         self.lbl_title = ctk.CTkLabel(self, text="Color Picker", font=("Roboto", 14, "bold"))
         self.lbl_title.pack(pady=(10, 5))
         
+        # Canvas Background based on mode (static for dialog lifetime)
+        mode = ctk.get_appearance_mode()
+        canvas_bg = "#1a1a1a" if mode == "Dark" else "#E0E0E0"
+        
         # Saturation-Value gradient canvas (2D)
         self.sv_size = 200
         self.sv_canvas = tk.Canvas(self, width=self.sv_size, height=self.sv_size, 
-                                    highlightthickness=0, bg="#1a1a1a")
+                                    highlightthickness=0, bg=canvas_bg)
         self.sv_canvas.pack(pady=10)
         
         # Hue slider canvas
-        self.hue_canvas = tk.Canvas(self, width=250, height=20, highlightthickness=0)
+        self.hue_canvas = tk.Canvas(self, width=250, height=20, highlightthickness=0, bg=canvas_bg)
         self.hue_canvas.pack(pady=10)
         
         # Hex input and preview
@@ -52,12 +56,11 @@ class ColorPickerDialog(ctk.CTkToplevel):
         self.bottom_frame.pack(fill="x", padx=20, pady=10)
         
         # Hex entry
-        self.hex_frame = ctk.CTkFrame(self.bottom_frame, fg_color="#1a1a1a")
+        self.hex_frame = ctk.CTkFrame(self.bottom_frame)
         self.hex_frame.pack(side="left", fill="x", expand=True)
         
         self.hex_entry = ctk.CTkEntry(self.hex_frame, width=100, 
                                        placeholder_text="#FFFFFF",
-                                       fg_color="#1a1a1a",
                                        border_width=0)
         self.hex_entry.pack(side="left", padx=5, pady=5)
         self.hex_entry.bind("<Return>", self._on_hex_enter)

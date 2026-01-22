@@ -74,14 +74,33 @@ class PaletteGenerator:
 
                 step = hue_range / max(count, 1)
 
-                # Pre-calculate hue slices
+                # Pre-calculate hue slices using Golden Ratio for better distribution
                 if g_idx not in self._group_hues:
                     slices = []
+                    
+                    # Golden Ratio method for well-distributed hues
+                    golden_ratio = 0.618033988749895
+                    
+                    # Start with a random offset for each group
+                    base_offset = random.uniform(0, 360)
+                    
                     for k in range(count):
-                        slice_start = hue_start + (k * step)
-                        jitter = random.uniform(0, step * 0.8)
-                        slices.append(slice_start + jitter)
+                        # Method 1: Golden Ratio based distribution (primary)
+                        golden_hue = (base_offset + (k * golden_ratio * 360)) % 360
+                        
+                        # Method 2: Add significant random jitter (full step range)
+                        jitter = random.uniform(-step * 0.5, step * 0.5)
+                        
+                        # Ensure hue stays within the user-defined range
+                        final_hue = hue_start + ((golden_hue - hue_start + jitter) % hue_range)
+                        
+                        slices.append(final_hue)
+                    
+                    # Triple shuffle for maximum randomness
                     random.shuffle(slices)
+                    random.shuffle(slices)
+                    random.shuffle(slices)
+                    
                     self._group_hues[g_idx] = slices
 
                 processed_groups.append({
@@ -118,8 +137,9 @@ class PaletteGenerator:
 
             for g_data in processed_groups:
                 if g_data['type'] == 'fixed':
-                    sat_shift = g_data['sat_shift'] + iter_sat_shift
-                    val_shift = 1 + g_data['val_shift'] + iter_val_shift
+                    # Fixed colors should NOT use random shifts - only group settings
+                    sat_shift = g_data['sat_shift']
+                    val_shift = 1 + g_data['val_shift']
                     
                     for j, idx in enumerate(g_data['indices']):
                         if 0 <= idx < 256:
@@ -151,11 +171,19 @@ class PaletteGenerator:
                             # Normalize
                             rn, gn, bn = r/255.0, g/255.0, b/255.0
                             h, s, v = colorsys.rgb_to_hsv(rn, gn, bn)
-
-                            new_s = max(0.0, min(1.0, s + sat_shift_total))
-                            new_v = max(0.0, min(1.0, v * val_mult_total))
                             
-                            r_out, g_out, b_out = colorsys.hsv_to_rgb(hue_normalized, new_s, new_v)
+                            # Add micro-variations per index for more diversity
+                            hue_micro = random.uniform(-0.03, 0.03)  # ±3% hue variation per color
+                            sat_micro = random.uniform(-0.08, 0.08)  # ±8% saturation micro-variation
+                            val_micro = random.uniform(-0.05, 0.05)  # ±5% brightness micro-variation
+                            
+                            # Apply base hue with micro-variation
+                            final_hue = (hue_normalized + hue_micro) % 1.0
+                            
+                            new_s = max(0.0, min(1.0, s + sat_shift_total + sat_micro))
+                            new_v = max(0.0, min(1.0, v * val_mult_total + val_micro))
+                            
+                            r_out, g_out, b_out = colorsys.hsv_to_rgb(final_hue, new_s, new_v)
                             new_palette[idx] = (int(r_out*255), int(g_out*255), int(b_out*255))
             
             palette_number = start_number + i

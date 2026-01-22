@@ -21,7 +21,7 @@ class GroupManagementFrame(ctk.CTkFrame):
         self.btn_remove.pack(side="left", padx=2)
         
         self.btn_clear = ctk.CTkButton(self.btn_frame, text="Limpar Seleção", command=self._on_clear_click, 
-                                        fg_color="#666666", hover_color="#888888", width=70)
+                                        fg_color="#D02752", hover_color="#8A244B", width=70)
         self.btn_clear.pack(side="left", padx=2)
         
         # Group List (Scrollable)

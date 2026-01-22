@@ -103,7 +103,7 @@ class ClassSelectorWindow(ctk.CTkToplevel):
         btn_frame.pack(fill="x", padx=10, pady=5)
         
         ctk.CTkButton(btn_frame, text="Selecionar Todos", command=self._select_all, width=120).pack(side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Limpar", command=self._clear_all, width=80).pack(side="left", padx=5)
+        ctk.CTkButton(btn_frame, text="Limpar", command=self._clear_all, width=80, fg_color="#D02752").pack(side="left", padx=5)
         
         # Scrollable frame for checkboxes
         self.scroll_frame = ctk.CTkScrollableFrame(self, label_text="Classes RO")

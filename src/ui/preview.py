@@ -3,14 +3,14 @@ from PIL import Image
 
 class SpritePreview(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs, fg_color="#FFFFFF")
+        super().__init__(master, **kwargs) # fg_color defaults to theme
         
         # Container frame for centering
-        self.container = ctk.CTkFrame(self, fg_color="#FFFFFF")
+        self.container = ctk.CTkFrame(self)
         self.container.pack(expand=True, fill="both")
         
         # Use Label for image display
-        self.image_label = ctk.CTkLabel(self.container, text="", fg_color="#FFFFFF")
+        self.image_label = ctk.CTkLabel(self.container, text="", fg_color="transparent")
         self.image_label.place(relx=0.5, rely=0.5, anchor="center")
         
         self.original_image = None  # Store unscaled source (RGBA)
