@@ -7,7 +7,7 @@ class GroupManagementFrame(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         
         # Title
-        self.lbl_title = ctk.CTkLabel(self, text="Grupos de Cores", font=("Roboto", 14, "bold"))
+        self.lbl_title = ctk.CTkLabel(self, text="Grupos de Cores", font=("Roboto", 12, "bold"))
         self.lbl_title.grid(row=0, column=0, padx=5, pady=5, sticky="w")
         
         # Buttons Frame
@@ -104,7 +104,7 @@ class GradientEditor(ctk.CTkFrame):
             text=" Degradê Fixo:",
             image=self.icon_manager.get_icon("art", size=(16, 16)),
             compound="left",
-            font=("Roboto", 11, "bold")
+            font=("Roboto", 11)
         )
         self.lbl_title.pack(anchor="w", padx=5, pady=(5, 2))
         
@@ -281,12 +281,12 @@ class GroupSettingsFrame(ctk.CTkFrame):
         self.current_group = None
         self.on_change_callback = None
         
-        self.lbl_title = ctk.CTkLabel(self, text="Configurações do Grupo", font=("Roboto", 16, "bold"))
-        self.lbl_title.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        self.lbl_title = ctk.CTkLabel(self, text="Configurações do Grupo", font=("Roboto", 12, "bold"))
+        self.lbl_title.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
         
         # Name
         self.entry_name = ctk.CTkEntry(self, placeholder_text="Nome do Grupo")
-        self.entry_name.grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        self.entry_name.grid(row=1, column=0, columnspan=2, padx=6, pady=1, sticky="ew")
         self.entry_name.bind("<FocusOut>", self._update_name)
         
         # Mode Switch
@@ -294,7 +294,7 @@ class GroupSettingsFrame(ctk.CTkFrame):
         self.switch_mode.grid(row=2, column=0, columnspan=2, padx=10, pady=(10,0), sticky="w")
         
         # --- Fixed Color Checkbox ---
-        self.checkbox_fixed = ctk.CTkCheckBox(self, text="🔒 Cor Fixa (Manual)", command=self._on_fixed_change)
+        self.checkbox_fixed = ctk.CTkCheckBox(self, text=" Cor Fixa (Manual)", command=self._on_fixed_change)
         self.checkbox_fixed.grid(row=3, column=0, columnspan=2, padx=10, pady=(10,0), sticky="w")
         
         # Gradient Editor (8 colors)
@@ -319,7 +319,7 @@ class GroupSettingsFrame(ctk.CTkFrame):
             text=" Faixa de Cores (Geração):",
             image=self.icon_manager.get_icon("rainbow", size=(16, 16)),
             compound="left",
-            font=("Roboto", 11, "bold")
+            font=("Roboto", 11)
         )
         self.lbl_hue_range.grid(row=7, column=0, columnspan=2, padx=10, pady=(15,0), sticky="w")
         

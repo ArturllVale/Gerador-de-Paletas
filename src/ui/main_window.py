@@ -45,7 +45,11 @@ class MainWindow(ctk.CTk):
         self.top_frame = ctk.CTkFrame(self, height=40)
         self.top_frame.grid(row=0, column=0, columnspan=4, sticky="ew", padx=5, pady=5)
         
-        self.btn_load_spr = ctk.CTkButton(self.top_frame, text="Carregar SPR", command=self.load_spr)
+        self.btn_load_spr = ctk.CTkButton(
+            self.top_frame, 
+            text="Carregar SPR", 
+            command=self.load_spr,
+        )
         self.btn_load_spr.pack(side="left", padx=5, pady=5)
         
         self.btn_preview_mode = ctk.CTkButton(
@@ -54,8 +58,8 @@ class MainWindow(ctk.CTk):
             image=self.icon_manager.get_icon("preview"),
             compound="left",
             command=self.enter_preview_mode,
-            fg_color="#E07A5F",  # Orange
-            hover_color="#C0583D"
+            fg_color="#D02752",  # Orange
+            hover_color="#8A244B"
         )
         self.btn_preview_mode.pack(side="left", padx=5, pady=5)
         
@@ -100,8 +104,6 @@ class MainWindow(ctk.CTk):
             image=self.icon_manager.get_icon("generate"),
             compound="left",
             command=self.generate_all_groups,
-            fg_color="#4CAF50",
-            hover_color="#388E3C",
             width=140
         )
         self.btn_generate.pack(side="left", padx=5)
@@ -188,7 +190,7 @@ class MainWindow(ctk.CTk):
         self.class_col = ctk.CTkFrame(self)
         self.class_col.grid(row=1, column=2, sticky="nsew", padx=5, pady=5)
         
-        self.lbl_classes = ctk.CTkLabel(self.class_col, text="Selecione as classes", font=("Roboto", 12, "bold"))
+        self.lbl_classes = ctk.CTkLabel(self.class_col, text="Gerar para Outras Classes?", font=("Roboto", 12, "bold"))
         self.lbl_classes.pack(pady=5)
         
         # Buttons
