@@ -15,12 +15,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 👈 ESSENCIAL para changelog
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip' # Enable caching for pip dependencies
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -36,3 +38,4 @@ jobs:
         with:
           files: dist/RoPalletEditor.exe
           fail_on_unmatched_files: true
+          generate_release_notes: true  # 👈 changelog automático
