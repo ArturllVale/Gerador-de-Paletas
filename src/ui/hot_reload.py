@@ -5,8 +5,15 @@ Uses watchdog to monitor file changes and applies them in real-time.
 import json
 import os
 import threading
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+try:
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler
+    WATCHDOG_AVAILABLE = True
+except ImportError:
+    WATCHDOG_AVAILABLE = False
+    # Dummy classes to prevent NameError
+    class FileSystemEventHandler: pass
+    class Observer: pass
 import customtkinter as ctk
 
 
@@ -109,6 +116,10 @@ class ThemeHotReloader:
     
     def start(self):
         """Start watching for theme changes."""
+        if not WATCHDOG_AVAILABLE:
+            print("[HotReload] Watchdog module not found (dev only). Hot reload disabled.")
+            return
+
         self.handler = ThemeReloadHandler(self.theme_path, self.root)
         self.observer = Observer()
         self.observer.schedule(self.handler, self.theme_dir, recursive=False)
@@ -117,6 +128,9 @@ class ThemeHotReloader:
     
     def stop(self):
         """Stop watching for theme changes."""
+        if not WATCHDOG_AVAILABLE:
+            return
+
         if self.observer:
             self.observer.stop()
             self.observer.join()
